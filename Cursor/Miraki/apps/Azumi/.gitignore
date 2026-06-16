@@ -1,0 +1,19 @@
+# AzumiDesigns local deployment artifacts
+target/
+tomcat/runtime/
+logs/*.log
+data/local-db/
+data/local-db/users.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+.settings/
+
+# OS
+.DS_Store
+Thumbs.db

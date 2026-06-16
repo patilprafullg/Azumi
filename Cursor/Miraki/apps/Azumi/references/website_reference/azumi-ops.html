@@ -1,0 +1,1828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Azumi Designs — Studio Planner</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Mono:wght@400;500&family=Syne:wght@600;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f0e0c;--bg2:#171512;--bg3:#1e1b17;--bg4:#252017;
+  --clay:#c8a97a;--clay2:#a07848;--clay3:#7a5830;
+  --ink:#f5f0e8;--ink2:#c8bfb0;--ink3:#7a6f65;--ink4:#3d3630;
+  --green:#5c8c6a;--red:#8c3a2a;--amber:#b87a30;
+  --border:rgba(200,169,122,0.18);--border2:rgba(200,169,122,0.35);
+  --sidebar:220px;
+}
+html{height:100%;font-size:14px;overflow:hidden}
+body{background:var(--bg);color:var(--ink);font-family:'DM Mono',monospace;height:100%;display:flex;overflow:hidden}
+
+/* ── GRID BACKGROUND ── */
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:
+    linear-gradient(rgba(200,169,122,0.04) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(200,169,122,0.04) 1px,transparent 1px);
+  background-size:32px 32px;
+}
+
+/* ── SIDEBAR ── */
+#sidebar{
+  position:fixed;left:0;top:0;bottom:0;width:var(--sidebar);height:100vh;
+  background:var(--bg2);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;z-index:50;
+  overflow:hidden;transition:transform .25s ease;
+}
+.sidebar-brand{padding:1.4rem 1.2rem 1rem;border-bottom:1px solid var(--border);}
+.sidebar-brand .logo{font-family:'Cormorant Garamond',serif;font-size:1.3rem;color:var(--clay);font-style:italic;}
+.sidebar-brand .tagline{font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);margin-top:.2rem;}
+.sidebar-nav{flex:1;overflow-y:auto;padding:.6rem 0}
+.nav-item{
+  display:flex;align-items:center;gap:.7rem;
+  padding:.7rem 1.2rem;cursor:pointer;font-size:.72rem;
+  letter-spacing:.06em;color:var(--ink2);
+  border-left:3px solid transparent;transition:all .15s;
+  text-transform:uppercase;
+}
+.nav-item:hover{background:var(--bg3);color:var(--ink)}
+.nav-item.active{border-left-color:var(--clay);background:var(--bg3);color:var(--clay)}
+.nav-icon{font-size:.9rem;flex-shrink:0;width:1.1rem;text-align:center}
+.sidebar-footer{padding:.8rem 1.2rem;border-top:1px solid var(--border);font-size:.62rem;color:var(--ink3);}
+.sidebar-footer .sync-btn{
+  display:flex;align-items:center;gap:.4rem;cursor:pointer;
+  color:var(--clay2);font-size:.65rem;letter-spacing:.06em;
+  text-transform:uppercase;margin-bottom:.4rem;
+  background:none;border:none;font-family:inherit;padding:0;
+}
+.sidebar-footer .sync-btn:hover{color:var(--clay)}
+
+/* ── SIDEBAR OVERLAY (mobile) ── */
+#sidebarOverlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:45;
+}
+#sidebarOverlay.visible{display:block}
+
+/* ── HAMBURGER ── */
+#menuBtn{
+  display:none;background:none;border:none;color:var(--ink);
+  font-size:1.2rem;cursor:pointer;padding:.2rem .4rem;line-height:1;
+}
+
+/* ── MAIN ── */
+#main{
+  margin-left:var(--sidebar);flex:1;
+  display:flex;flex-direction:column;
+  height:100vh;
+  position:relative;z-index:1;overflow:hidden;
+  transition:margin-left .25s ease;
+}
+.topbar{
+  flex-shrink:0;z-index:40;
+  background:rgba(15,14,12,.95);backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--border);
+  padding:.7rem 1.5rem;display:flex;align-items:center;justify-content:space-between;
+  gap:.8rem;
+}
+.topbar-left{display:flex;align-items:center;gap:.7rem}
+.page-scroll-area{flex:1;overflow-y:auto;overflow-x:hidden;}
+.topbar-title{
+  font-family:'Syne',sans-serif;font-size:.85rem;font-weight:700;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--ink);
+}
+.topbar-right{display:flex;align-items:center;gap:.6rem;flex-shrink:0}
+.badge{
+  font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;
+  padding:.2rem .55rem;border:1px solid var(--border2);color:var(--clay2);
+  white-space:nowrap;
+}
+
+/* ── PAGES ── */
+.page{display:none;padding:1.5rem;min-height:100%;animation:fadeIn .2s ease}
+.page.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── SECTION HEADER ── */
+.sec-eyebrow{font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;color:var(--clay2);margin-bottom:.3rem}
+.sec-title{font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:400;color:var(--ink);margin-bottom:1.2rem;line-height:1.2}
+.sec-title em{font-style:italic;color:var(--clay)}
+
+/* ── CARDS ── */
+.card{background:var(--bg2);border:1px solid var(--border);padding:1.1rem;margin-bottom:.9rem}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem}
+.card-title{font-family:'Syne',sans-serif;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--ink)}
+
+/* ── GRIDS — stack on mobile ── */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem}
+
+/* ── INPUTS ── */
+input,textarea,select{
+  background:var(--bg3);border:1px solid var(--border);color:var(--ink);
+  font-family:'DM Mono',monospace;font-size:.78rem;padding:.55rem .7rem;
+  width:100%;outline:none;transition:border-color .15s;
+  -webkit-appearance:none;border-radius:0;
+}
+input:focus,textarea:focus,select:focus{border-color:var(--clay2)}
+textarea{resize:vertical;min-height:80px}
+select option{background:var(--bg3)}
+label{display:block;font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);margin-bottom:.3rem}
+.field{margin-bottom:.9rem}
+
+/* ── BUTTONS ── */
+.btn{
+  font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;
+  padding:.55rem 1rem;border:1px solid var(--border2);background:transparent;color:var(--clay);
+  cursor:pointer;transition:all .15s;white-space:nowrap;
+}
+.btn:hover{background:var(--clay);color:var(--bg);border-color:var(--clay)}
+.btn-solid{background:var(--clay);color:var(--bg);border-color:var(--clay)}
+.btn-solid:hover{background:var(--clay2);border-color:var(--clay2)}
+.btn-danger{border-color:var(--red);color:var(--red)}
+.btn-danger:hover{background:var(--red);color:var(--ink)}
+.btn-sm{padding:.35rem .65rem;font-size:.62rem}
+.btn-row{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.8rem}
+
+/* ── STATUS PILLS ── */
+.pill{display:inline-block;font-size:.58rem;letter-spacing:.08em;text-transform:uppercase;padding:.15rem .5rem;border-radius:0}
+.pill-active{background:rgba(92,140,106,.2);color:#7bc490;border:1px solid rgba(92,140,106,.4)}
+.pill-hold{background:rgba(184,122,48,.2);color:#d4a060;border:1px solid rgba(184,122,48,.4)}
+.pill-done{background:rgba(61,54,48,.4);color:var(--ink3);border:1px solid var(--border)}
+.pill-new{background:rgba(200,169,122,.15);color:var(--clay);border:1px solid var(--border2)}
+
+/* ── PROJECT CARDS ── */
+.project-card{
+  background:var(--bg2);border:1px solid var(--border);
+  padding:1.1rem;margin-bottom:.8rem;
+  border-left:3px solid var(--border);transition:border-color .15s;
+  cursor:pointer;
+}
+.project-card:hover{border-left-color:var(--clay);background:var(--bg3)}
+.project-card.status-active{border-left-color:var(--green)}
+.project-card.status-hold{border-left-color:var(--amber)}
+.project-card.status-done{border-left-color:var(--ink4)}
+.project-name{font-family:'Syne',sans-serif;font-size:.82rem;font-weight:700;margin-bottom:.3rem}
+.project-meta{font-size:.62rem;color:var(--ink3);display:flex;gap:.8rem;flex-wrap:wrap;margin-top:.3rem}
+.project-progress{height:2px;background:var(--bg4);margin-top:.8rem}
+.project-progress-fill{height:100%;background:var(--clay);transition:width .3s}
+
+/* ── MOOD BOARD ── */
+.moodboard-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
+  gap:.7rem;margin-top:1rem;
+}
+.mood-item{
+  background:var(--bg3);border:1px solid var(--border);
+  aspect-ratio:1;position:relative;overflow:hidden;cursor:pointer;
+  transition:border-color .15s;
+}
+.mood-item:hover{border-color:var(--clay2)}
+.mood-item img{width:100%;height:100%;object-fit:cover;display:block}
+.mood-item-label{
+  position:absolute;bottom:0;left:0;right:0;
+  background:rgba(15,14,12,.85);
+  font-size:.55rem;letter-spacing:.06em;padding:.35rem .45rem;
+  color:var(--ink2);text-transform:uppercase;
+}
+.mood-item-del{
+  position:absolute;top:.35rem;right:.35rem;
+  background:var(--red);color:var(--ink);border:none;
+  font-size:.6rem;cursor:pointer;padding:.12rem .3rem;
+  opacity:0;transition:opacity .15s;
+}
+.mood-item:hover .mood-item-del{opacity:1}
+.mood-add{
+  background:var(--bg3);border:1px dashed var(--border2);
+  aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:.4rem;cursor:pointer;color:var(--ink3);font-size:.65rem;
+  letter-spacing:.08em;text-transform:uppercase;transition:all .15s;
+}
+.mood-add:hover{border-color:var(--clay);color:var(--clay)}
+.mood-add-icon{font-size:1.4rem}
+
+/* ── LINKS ── */
+.link-cat{margin-bottom:1.2rem}
+.link-cat-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:.55rem .8rem;background:var(--bg3);border:1px solid var(--border);
+  cursor:pointer;margin-bottom:.2rem;
+}
+.link-cat-name{font-family:'Syne',sans-serif;font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.link-cat-toggle{color:var(--clay);font-size:.8rem}
+.link-row{
+  display:flex;align-items:center;gap:.5rem;
+  padding:.45rem .8rem;background:var(--bg2);border:1px solid var(--border);
+  border-top:none;font-size:.68rem;flex-wrap:wrap;
+}
+.link-row a{color:var(--clay);text-decoration:none;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.link-row a:hover{text-decoration:underline}
+.link-row-label{color:var(--ink2);width:100%;font-size:.64rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.link-row-del{background:none;border:none;color:var(--ink4);cursor:pointer;font-size:.8rem;flex-shrink:0}
+.link-row-del:hover{color:var(--red)}
+
+/* ── CHECKLIST (legacy styles kept for safety) ── */
+.checklist-section{margin-bottom:1.5rem}
+.checklist-section-title{font-family:'Syne',sans-serif;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--clay2);padding:.4rem 0;border-bottom:1px solid var(--border);margin-bottom:.6rem;}
+.check-item{display:flex;align-items:flex-start;gap:.7rem;padding:.35rem 0;border-bottom:1px solid var(--border)}
+.check-item:last-child{border-bottom:none}
+.check-item input[type=checkbox]{width:14px;height:14px;flex-shrink:0;margin-top:1px;cursor:pointer;accent-color:var(--clay);}
+.check-item label{font-size:.7rem;color:var(--ink2);cursor:pointer;margin:0;text-transform:none;letter-spacing:0}
+.check-item.checked label{text-decoration:line-through;color:var(--ink3)}
+.check-item-del{background:none;border:none;color:var(--ink4);cursor:pointer;margin-left:auto;font-size:.75rem;flex-shrink:0}
+.check-item-del:hover{color:var(--red)}
+
+/* ── SURVEY ── */
+.survey-section{margin-bottom:2rem}
+.survey-q{margin-bottom:1rem}
+.survey-q .q-label{font-family:'Cormorant Garamond',serif;font-size:1rem;font-style:italic;color:var(--ink);margin-bottom:.4rem}
+.survey-preview{background:var(--bg2);border:1px solid var(--border);padding:1.4rem;font-size:.72rem;line-height:1.9;color:var(--ink2);}
+.survey-preview h3{font-family:'Cormorant Garamond',serif;font-size:1.4rem;color:var(--clay);margin-bottom:1rem}
+
+/* ── MODAL ── */
+.modal-overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);
+  z-index:200;align-items:center;justify-content:center;padding:1rem;
+}
+.modal-overlay.open{display:flex}
+.modal{
+  background:var(--bg2);border:1px solid var(--border2);
+  padding:1.4rem;max-width:520px;width:100%;max-height:92vh;overflow-y:auto;
+  position:relative;
+}
+.modal-title{font-family:'Syne',sans-serif;font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:1.2rem;color:var(--clay)}
+.modal-close{position:absolute;top:.8rem;right:.8rem;background:none;border:none;color:var(--ink3);cursor:pointer;font-size:1.1rem;padding:.2rem .4rem;}
+.modal-close:hover{color:var(--clay)}
+
+/* ── DASHBOARD STATS ── */
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:.7rem;margin-bottom:1.4rem}
+.stat-box{background:var(--bg2);border:1px solid var(--border);padding:.9rem}
+.stat-num{font-family:'Cormorant Garamond',serif;font-size:2.2rem;font-weight:400;color:var(--clay);line-height:1}
+.stat-label{font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);margin-top:.2rem}
+
+/* ── KIT TABS ── */
+.kit-tabs-wrap{display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:1rem}
+.kit-tab{
+  font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.07em;text-transform:uppercase;
+  padding:.45rem .8rem;border:1px solid var(--border);background:var(--bg2);color:var(--ink3);
+  cursor:pointer;transition:all .15s;white-space:nowrap;
+}
+.kit-tab:hover{color:var(--ink);background:var(--bg3)}
+.kit-tab.active{background:var(--clay);color:var(--bg);border-color:var(--clay)}
+
+/* ── KIT FORM ── */
+.kit-doc{animation:fadeIn .2s ease}
+.kit-section{margin-bottom:1.6rem}
+.kit-section-hdr{
+  font-family:'Syne',sans-serif;font-size:.67rem;font-weight:700;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--clay2);
+  padding:.5rem 0;border-bottom:1px solid var(--border);margin-bottom:.9rem;
+  display:flex;align-items:center;gap:.5rem;
+}
+.kit-section-hdr::before{content:'';display:block;width:16px;height:2px;background:var(--clay);flex-shrink:0}
+.kit-row{display:grid;grid-template-columns:1fr 1fr;gap:.7rem;margin-bottom:.6rem}
+.kit-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.7rem;margin-bottom:.6rem}
+.kit-field{margin-bottom:.7rem}
+.kit-field label{font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);margin-bottom:.28rem;display:block}
+.kit-field input,.kit-field textarea,.kit-field select{
+  background:var(--bg3);border:1px solid var(--border);color:var(--ink);
+  font-family:'DM Mono',monospace;font-size:.76rem;padding:.5rem .65rem;
+  width:100%;outline:none;transition:border-color .15s;border-radius:0;
+}
+.kit-field input:focus,.kit-field textarea:focus,.kit-field select:focus{border-color:var(--clay2)}
+.kit-field textarea{resize:vertical;min-height:64px}
+.kit-note{
+  font-size:.68rem;line-height:1.8;color:var(--ink3);
+  border-left:3px solid var(--clay3);padding:.6rem .8rem;
+  background:var(--bg3);margin-bottom:.9rem;font-style:italic;
+}
+/* scope table — scrollable on mobile */
+.table-wrap{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:.8rem}
+.scope-table{width:100%;min-width:520px;border-collapse:collapse;font-size:.68rem}
+.scope-table th{background:var(--bg4);color:var(--clay2);font-family:'Syne',sans-serif;font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;padding:.5rem .6rem;text-align:left;border:1px solid var(--border)}
+.scope-table td{padding:.4rem .6rem;border:1px solid var(--border);color:var(--ink2);vertical-align:middle}
+.scope-table tr:nth-child(even) td{background:rgba(255,255,255,.02)}
+.scope-table select{padding:.22rem .35rem;font-size:.6rem;width:auto}
+.scope-table input[type=text]{padding:.22rem .35rem;font-size:.6rem}
+/* checklist inside kit */
+.kit-check-item{display:flex;align-items:flex-start;gap:.6rem;padding:.38rem 0;border-bottom:1px solid rgba(200,169,122,.08)}
+.kit-check-item input[type=checkbox]{width:15px;height:15px;flex-shrink:0;margin-top:1px;accent-color:var(--clay)}
+.kit-check-item label{font-size:.72rem;color:var(--ink2);cursor:pointer;margin:0;text-transform:none;letter-spacing:0;line-height:1.5}
+.kit-check-item.done label{text-decoration:line-through;color:var(--ink4)}
+/* budget table */
+.bgt-table{width:100%;min-width:420px;border-collapse:collapse;font-size:.68rem}
+.bgt-table th{background:var(--clay3);color:var(--ink);font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;padding:.5rem .65rem;text-align:center;border:1px solid var(--border)}
+.bgt-table th:first-child{text-align:left}
+.bgt-table td{padding:.4rem .65rem;border:1px solid var(--border);color:var(--ink2);text-align:center}
+.bgt-table td:first-child{text-align:left;color:var(--ink);font-size:.64rem}
+.bgt-table tr:nth-child(even) td{background:rgba(255,255,255,.02)}
+/* clause boxes */
+.clause-box{border:1px solid var(--border);margin-bottom:.5rem}
+.clause-box-hdr{display:flex;align-items:center;gap:.6rem;padding:.6rem .8rem;background:var(--bg3);cursor:pointer}
+.clause-box-hdr input[type=checkbox]{width:14px;height:14px;accent-color:var(--clay);flex-shrink:0}
+.clause-box-title{font-size:.7rem;font-family:'Syne',sans-serif;font-weight:700;color:var(--ink);flex:1;line-height:1.4}
+.clause-box-body{padding:.6rem .8rem;font-size:.68rem;line-height:1.8;color:var(--ink3);border-top:1px solid var(--border);display:none}
+.clause-box.open .clause-box-body{display:block}
+.clause-box-body textarea{width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--ink2);font-family:'DM Mono',monospace;font-size:.67rem;padding:.4rem .6rem;outline:none;min-height:56px;resize:vertical;border-radius:0}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--ink4)}
+::-webkit-scrollbar-thumb:hover{background:var(--clay3)}
+
+/* ── TOAST ── */
+#toast{
+  position:fixed;bottom:1.2rem;right:1.2rem;left:1.2rem;
+  background:var(--clay);color:var(--bg);font-size:.65rem;letter-spacing:.1em;
+  text-transform:uppercase;padding:.55rem 1rem;z-index:999;
+  opacity:0;transition:opacity .2s;pointer-events:none;text-align:center;
+}
+#toast.show{opacity:1}
+
+/* ── EMPTY STATE ── */
+.empty{padding:2.5rem 1rem;text-align:center;color:var(--ink3);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase}
+.empty-icon{font-size:2rem;margin-bottom:.6rem}
+.divider{height:1px;background:var(--border);margin:1.2rem 0}
+
+/* ══════════════════════════════════════
+   RESPONSIVE BREAKPOINTS
+══════════════════════════════════════ */
+
+/* ── TABLET (≤900px) ── */
+@media(max-width:900px){
+  :root{--sidebar:200px}
+  .grid-3{grid-template-columns:1fr 1fr}
+  .stat-row{grid-template-columns:repeat(2,1fr)}
+  .kit-row-3{grid-template-columns:1fr 1fr}
+  .topbar{padding:.65rem 1.1rem}
+}
+
+/* ── MOBILE (≤640px) ── */
+@media(max-width:640px){
+  html{font-size:13px}
+
+  /* Sidebar slides off-canvas; toggled by hamburger */
+  #sidebar{transform:translateX(-100%);width:260px}
+  #sidebar.open{transform:translateX(0)}
+  #menuBtn{display:block}
+
+  /* Main fills full width */
+  #main{margin-left:0}
+
+  /* Topbar compact */
+  .topbar{padding:.6rem .9rem}
+  .topbar-title{font-size:.78rem}
+  .badge#syncBadge{display:none}
+
+  /* Pages */
+  .page{padding:1rem}
+
+  /* Section title smaller */
+  .sec-title{font-size:1.5rem;margin-bottom:1rem}
+
+  /* All grids → single column */
+  .grid-2,.grid-3,.kit-row,.kit-row-3{grid-template-columns:1fr}
+
+  /* Stats → 2 per row */
+  .stat-row{grid-template-columns:1fr 1fr;gap:.5rem}
+  .stat-num{font-size:1.9rem}
+
+  /* Kit tabs wrap and are tap-friendly */
+  .kit-tabs-wrap{gap:.25rem}
+  .kit-tab{padding:.5rem .7rem;font-size:.6rem}
+
+  /* Kit toolbar stacks */
+  .kit-toolbar{flex-direction:column;align-items:stretch;gap:.5rem}
+  .kit-toolbar select,.kit-toolbar .btn{width:100%}
+
+  /* Tables scroll horizontally */
+  .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .scope-table,.bgt-table{min-width:480px}
+
+  /* Moodboard 2 cols */
+  .moodboard-grid{grid-template-columns:repeat(2,1fr);gap:.5rem}
+
+  /* Link rows stack label above link */
+  .link-row{flex-direction:column;align-items:flex-start;gap:.3rem}
+  .link-row-label{width:100%}
+
+  /* Modals full-width */
+  .modal{padding:1.1rem;max-height:88vh}
+
+  /* Card padding tighter */
+  .card{padding:.9rem}
+
+  /* Buttons full-width when stacked */
+  .btn-row{flex-direction:row;flex-wrap:wrap}
+
+  /* Clause box titles smaller */
+  .clause-box-title{font-size:.68rem}
+
+  /* Mood board touch-friendly delete always visible */
+  .mood-item-del{opacity:1}
+
+  /* Survey preview hidden on mobile (not needed) */
+  .survey-preview-col{display:none}
+}
+
+/* ── SMALL MOBILE (≤380px) ── */
+@media(max-width:380px){
+  html{font-size:12px}
+  .stat-row{grid-template-columns:1fr 1fr}
+  .kit-tab{padding:.45rem .55rem;font-size:.58rem}
+  .moodboard-grid{grid-template-columns:repeat(2,1fr)}
+  .page{padding:.8rem}
+}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR OVERLAY -->
+<div id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<!-- SIDEBAR -->
+<nav id="sidebar">
+  <div class="sidebar-brand">
+    <div class="logo">Azumi Designs</div>
+    <div class="tagline">Studio Planner</div>
+  </div>
+  <div class="sidebar-nav">
+    <div class="nav-item active" data-page="dashboard"><span class="nav-icon">◈</span> Dashboard</div>
+    <div class="nav-item" data-page="projects"><span class="nav-icon">⬡</span> Projects</div>
+    <div class="nav-item" data-page="clients"><span class="nav-icon">◻</span> New Client</div>
+    <div class="nav-item" data-page="moodboard"><span class="nav-icon">▦</span> Mood Board</div>
+    <div class="nav-item" data-page="links"><span class="nav-icon">⊞</span> Resource Links</div>
+    <div class="nav-item" data-page="kit"><span class="nav-icon">✓</span> Client Kit</div>
+    <div class="nav-item" data-page="survey"><span class="nav-icon">◈</span> Client Survey</div>
+  </div>
+  <div class="sidebar-footer">
+    <button class="sync-btn" onclick="exportData()">↑ Export / Backup</button>
+    <button class="sync-btn" onclick="document.getElementById('importFile').click()">↓ Import / Sync</button>
+    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)"/>
+    <div style="margin-top:.4rem">v1.0 · Azumi Designs</div>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<main id="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <button id="menuBtn" onclick="toggleSidebar()" aria-label="Menu">☰</button>
+      <div class="topbar-title" id="topbarTitle">Dashboard</div>
+    </div>
+    <div class="topbar-right">
+      <span class="badge" id="todayBadge"></span>
+      <span class="badge" id="syncBadge">Local Storage</span>
+    </div>
+  </div>
+
+  <div class="page-scroll-area" id="pageScrollArea">
+  <!-- ── DASHBOARD ── -->
+  <div class="page active" id="page-dashboard">
+    <div class="sec-eyebrow">Studio Overview</div>
+    <div class="sec-title">Good to see you, <em>Sindhu.</em></div>
+    <div class="stat-row" id="dashStats"></div>
+    <div class="grid-2">
+      <div>
+        <div class="card-title" style="margin-bottom:.8rem">Active Projects</div>
+        <div id="dashProjects"></div>
+      </div>
+      <div>
+        <div class="card-title" style="margin-bottom:.8rem">Recent Clients</div>
+        <div id="dashClients"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PROJECTS ── -->
+  <div class="page" id="page-projects">
+    <div class="sec-eyebrow">Ongoing Work</div>
+    <div class="sec-title">Projects</div>
+    <div class="btn-row" style="margin-bottom:1.2rem;margin-top:0">
+      <button class="btn btn-solid" onclick="openModal('projectModal')">+ Add Project</button>
+      <select id="projectFilter" style="width:auto;padding:.4rem .8rem" onchange="renderProjects()">
+        <option value="all">All Status</option>
+        <option value="active">Active</option>
+        <option value="hold">On Hold</option>
+        <option value="done">Completed</option>
+      </select>
+    </div>
+    <div id="projectsList"></div>
+  </div>
+
+  <!-- ── NEW CLIENT ── -->
+  <div class="page" id="page-clients">
+    <div class="sec-eyebrow">Client Intake</div>
+    <div class="sec-title">New <em>Client</em></div>
+    <div class="grid-2">
+      <div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Client Details</div></div>
+          <div class="field"><label>Client Name(s)</label><input type="text" id="cl-name" placeholder="e.g. Mr. & Mrs. Mehta"/></div>
+          <div class="field"><label>Contact Number</label><input type="text" id="cl-phone" placeholder="WhatsApp number"/></div>
+          <div class="field"><label>Email</label><input type="text" id="cl-email" placeholder="email address"/></div>
+          <div class="field"><label>Property</label><input type="text" id="cl-property" placeholder="e.g. 3BHK Villa, Goa"/></div>
+          <div class="field"><label>Project Type</label>
+            <select id="cl-type">
+              <option>Goa Villa / Holiday Home</option>
+              <option>Pune Apartment</option>
+              <option>NRI / Remote Project</option>
+              <option>Commercial</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="field"><label>Budget Range</label><input type="text" id="cl-budget" placeholder="e.g. ₹20L – ₹30L"/></div>
+          <div class="field"><label>Notes</label><textarea id="cl-notes" placeholder="Style direction, references, key observations..."></textarea></div>
+          <div class="btn-row">
+            <button class="btn btn-solid" onclick="saveClient()">Save Client</button>
+            <button class="btn" onclick="clearClientForm()">Clear</button>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="card-title" style="margin-bottom:.8rem">Saved Clients</div>
+        <div id="clientsList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MOOD BOARD ── -->
+  <div class="page" id="page-moodboard">
+    <div class="sec-eyebrow">Visual Reference</div>
+    <div class="sec-title">Mood <em>Board</em></div>
+    <div class="btn-row" style="margin-bottom:.5rem;margin-top:0">
+      <select id="moodProject" style="width:auto;padding:.4rem .8rem">
+        <option value="general">General / Studio</option>
+      </select>
+      <button class="btn btn-solid" onclick="openModal('moodModal')">+ Add Image</button>
+    </div>
+    <div class="moodboard-grid" id="moodGrid"></div>
+  </div>
+
+  <!-- ── LINKS ── -->
+  <div class="page" id="page-links">
+    <div class="sec-eyebrow">Resource Library</div>
+    <div class="sec-title">Links & <em>References</em></div>
+    <div class="btn-row" style="margin-bottom:1.2rem;margin-top:0">
+      <button class="btn btn-solid" onclick="openModal('linkModal')">+ Add Link</button>
+      <button class="btn" onclick="openModal('catModal')">+ New Category</button>
+    </div>
+    <div id="linksList"></div>
+  </div>
+
+  <!-- ── CLIENT KIT ── -->
+  <div class="page" id="page-kit">
+    <div class="sec-eyebrow">Project Brief & Scope Kit</div>
+    <div class="sec-title">Client <em>Kit</em></div>
+
+    <!-- Doc selector + client tag -->
+    <div class="kit-toolbar" style="display:flex;align-items:center;gap:.7rem;margin-bottom:.8rem;flex-wrap:wrap">
+      <select id="kitClientTag" style="width:auto;padding:.38rem .7rem;font-size:.68rem;flex:1;min-width:140px" onchange="loadKitDoc()">
+        <option value="">— Link to project —</option>
+      </select>
+      <button class="btn btn-sm btn-solid" onclick="saveKitDoc()">Save</button>
+      <button class="btn btn-sm" onclick="exportKitDoc()">↓ Export</button>
+    </div>
+    <div class="kit-tabs-wrap">
+      <button class="kit-tab active" data-doc="0">01 Discovery</button>
+      <button class="kit-tab" data-doc="1">02 Scope</button>
+      <button class="kit-tab" data-doc="2">03 Clauses</button>
+      <button class="kit-tab" data-doc="3">04 NRI</button>
+      <button class="kit-tab" data-doc="4">05 Budget</button>
+      <button class="kit-tab" data-doc="5">06 Meeting</button>
+    </div>
+
+    <div id="kitDocContainer"></div>
+  </div>
+
+  <!-- ── SURVEY ── -->
+  <div class="page" id="page-survey">
+    <div class="sec-eyebrow">Client Intake Form</div>
+    <div class="sec-title">Client <em>Survey</em></div>
+    <div class="grid-2" style="align-items:start">
+      <div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Customise Survey Link</div></div>
+          <div class="field"><label>Studio Name (shown to client)</label><input type="text" id="sv-studio" value="Azumi Designs"/></div>
+          <div class="field"><label>Designer Name</label><input type="text" id="sv-designer" value="Sindhu Kodihal"/></div>
+          <div class="field"><label>Contact Email</label><input type="text" id="sv-email" value="hello@azumidesigns.co.in"/></div>
+          <div class="field"><label>Intro Message to Client</label><textarea id="sv-intro">Thank you for reaching out. Please fill in the form below — your answers help us design with intention, not assumption. Take your time.</textarea></div>
+          <div class="btn-row">
+            <button class="btn btn-solid" onclick="generateSurveyLink()">Generate Survey Page</button>
+          </div>
+          <div id="surveyLinkOutput" style="margin-top:.8rem"></div>
+        </div>
+      </div>
+      <div>
+        <div class="card-title" style="margin-bottom:.8rem">Survey Preview</div>
+        <div class="survey-preview" id="surveyPreview">
+          <h3>Client Discovery Form</h3>
+          <div style="font-size:.62rem;color:var(--ink3);margin-bottom:1rem">Azumi Designs · Sindhu Kodihal</div>
+          <div class="survey-q"><div class="q-label">What spaces do you want designed?</div></div>
+          <div class="survey-q"><div class="q-label">How would you describe your ideal home in 3 words?</div></div>
+          <div class="survey-q"><div class="q-label">What's your approximate budget?</div></div>
+          <div class="survey-q"><div class="q-label">What's your ideal completion date?</div></div>
+          <div class="survey-q"><div class="q-label">Share any references or inspiration links.</div></div>
+          <div style="font-size:.62rem;color:var(--ink3);margin-top:1rem;font-style:italic">+ 12 more questions from the discovery brief</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  </div><!-- end page-scroll-area -->
+</main>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="projectModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('projectModal')">✕</button>
+    <div class="modal-title">Add Project</div>
+    <div class="field"><label>Project Name</label><input type="text" id="pm-name" placeholder="e.g. Sharma Villa · Goa"/></div>
+    <div class="field"><label>Client</label><input type="text" id="pm-client" placeholder="Client name"/></div>
+    <div class="field"><label>Location</label><input type="text" id="pm-location" placeholder="e.g. Candolim, Goa"/></div>
+    <div class="field"><label>Status</label>
+      <select id="pm-status"><option value="active">Active</option><option value="hold">On Hold</option><option value="done">Completed</option></select>
+    </div>
+    <div class="field"><label>Start Date</label><input type="date" id="pm-start"/></div>
+    <div class="field"><label>Target Completion</label><input type="date" id="pm-end"/></div>
+    <div class="field"><label>Budget</label><input type="text" id="pm-budget" placeholder="₹"/></div>
+    <div class="field"><label>Progress (%)</label><input type="number" id="pm-progress" min="0" max="100" value="0"/></div>
+    <div class="field"><label>Notes</label><textarea id="pm-notes" placeholder="Key notes, scope, deliverables..."></textarea></div>
+    <div class="btn-row"><button class="btn btn-solid" onclick="saveProject()">Save Project</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="projectDetailModal">
+  <div class="modal" style="max-width:620px">
+    <button class="modal-close" onclick="closeModal('projectDetailModal')">✕</button>
+    <div id="projectDetailContent"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="moodModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('moodModal')">✕</button>
+    <div class="modal-title">Add to Mood Board</div>
+    <div class="field"><label>Label / Description</label><input type="text" id="mm-label" placeholder="e.g. Master bedroom palette"/></div>
+    <div class="field"><label>Image URL</label><input type="text" id="mm-url" placeholder="https://... or paste a Pinterest image link"/></div>
+    <div style="text-align:center;font-size:.62rem;color:var(--ink3);margin:.5rem 0">— or —</div>
+    <div class="field"><label>Upload Image</label><input type="file" id="mm-file" accept="image/*"/></div>
+    <div class="field"><label>Project</label><select id="mm-project"></select></div>
+    <div class="btn-row"><button class="btn btn-solid" onclick="saveMoodItem()">Add to Board</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="linkModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('linkModal')">✕</button>
+    <div class="modal-title">Add Resource Link</div>
+    <div class="field"><label>Label / Name</label><input type="text" id="lm-label" placeholder="e.g. RAK Ceramics Goa Showroom"/></div>
+    <div class="field"><label>URL</label><input type="text" id="lm-url" placeholder="https://..."/></div>
+    <div class="field"><label>Category</label><select id="lm-cat"></select></div>
+    <div class="btn-row"><button class="btn btn-solid" onclick="saveLink()">Save Link</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="catModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('catModal')">✕</button>
+    <div class="modal-title">New Category</div>
+    <div class="field"><label>Category Name</label><input type="text" id="cm-name" placeholder="e.g. Hardware & Handles"/></div>
+    <div class="btn-row"><button class="btn btn-solid" onclick="saveCategory()">Create Category</button></div>
+  </div>
+</div>
+
+
+<div id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════
+const KEY = 'azumi_ops_v1';
+let S = load();
+
+function load() {
+  try {
+    const d = JSON.parse(localStorage.getItem(KEY));
+    if (d) return d;
+  } catch(e) {}
+  return {
+    projects: [],
+    clients: [],
+    moodItems: [],
+    links: [],
+    linkCats: ['Tile Shops','Plumbing & Sanitaryware','Paint Brands','Hardware & Handles','Furniture Vendors','Lighting Suppliers','Wallpaper & Fabric','Contractors','Inspiration'],
+    kitData: {},
+  };
+}
+
+function save() {
+  localStorage.setItem(KEY, JSON.stringify(S));
+}
+
+// ══════════════════════════════════════════════
+// SIDEBAR MOBILE TOGGLE
+// ══════════════════════════════════════════════
+function toggleSidebar(){
+  const sb = document.getElementById('sidebar');
+  const ov = document.getElementById('sidebarOverlay');
+  sb.classList.toggle('open');
+  ov.classList.toggle('visible');
+}
+function closeSidebar(){
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('visible');
+}
+
+// ══════════════════════════════════════════════
+// NAV
+// ══════════════════════════════════════════════
+const titles = {
+  dashboard:'Dashboard',projects:'Projects',clients:'New Client',
+  moodboard:'Mood Board',links:'Resource Links',kit:'Client Kit',survey:'Client Survey'
+};
+document.querySelectorAll('.nav-item').forEach(el => {
+  el.addEventListener('click', () => {
+    // auto-save kit doc if leaving kit page with unsaved changes
+    if(document.getElementById('page-kit').classList.contains('active') && kitDirty) saveKitDoc(true);
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    el.classList.add('active');
+    const pg = el.dataset.page;
+    document.getElementById('page-'+pg).classList.add('active');
+    document.getElementById('topbarTitle').textContent = titles[pg];
+    // scroll page back to top
+    const sa = document.getElementById('pageScrollArea');
+    if(sa) sa.scrollTop = 0;
+    if (pg==='dashboard') renderDashboard();
+    if (pg==='projects') renderProjects();
+    if (pg==='clients') renderClients();
+    if (pg==='moodboard') renderMoodboard();
+    if (pg==='links') renderLinks();
+    if (pg==='kit') initKit();
+  });
+});
+
+// ══════════════════════════════════════════════
+// MODALS
+// ══════════════════════════════════════════════
+function openModal(id) {
+  if(id==='moodModal') populateMoodProjectSelect();
+  if(id==='linkModal') populateLinkCatSelect();
+  document.getElementById(id).classList.add('open');
+}
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(el => {
+  el.addEventListener('click', e => { if(e.target===el) el.classList.remove('open'); });
+});
+
+// ══════════════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════════════
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+// ══════════════════════════════════════════════
+// DATE
+// ══════════════════════════════════════════════
+const days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function fmtDate(d){ if(!d)return''; const x=new Date(d); return x.getDate()+' '+months[x.getMonth()]+' '+x.getFullYear(); }
+const now = new Date();
+document.getElementById('todayBadge').textContent = days[now.getDay()]+' · '+now.getDate()+' '+months[now.getMonth()]+' '+now.getFullYear();
+
+// ══════════════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════════════
+function renderDashboard() {
+  const active = S.projects.filter(p=>p.status==='active').length;
+  const hold   = S.projects.filter(p=>p.status==='hold').length;
+  const done   = S.projects.filter(p=>p.status==='done').length;
+  document.getElementById('dashStats').innerHTML = `
+    <div class="stat-box"><div class="stat-num">${S.projects.length}</div><div class="stat-label">Total Projects</div></div>
+    <div class="stat-box"><div class="stat-num" style="color:#7bc490">${active}</div><div class="stat-label">Active</div></div>
+    <div class="stat-box"><div class="stat-num" style="color:#d4a060">${hold}</div><div class="stat-label">On Hold</div></div>
+    <div class="stat-box"><div class="stat-num">${S.clients.length}</div><div class="stat-label">Clients</div></div>
+  `;
+  const ap = S.projects.filter(p=>p.status==='active').slice(0,4);
+  document.getElementById('dashProjects').innerHTML = ap.length
+    ? ap.map(p=>`<div class="project-card status-active" onclick="showProjectDetail('${p.id}')">
+        <div class="project-name">${p.name}</div>
+        <div class="project-meta"><span>${p.client||'—'}</span><span>${p.location||'—'}</span><span>${p.budget||''}</span></div>
+        <div class="project-progress"><div class="project-progress-fill" style="width:${p.progress||0}%"></div></div>
+      </div>`).join('')
+    : '<div class="empty"><div class="empty-icon">⬡</div>No active projects yet.</div>';
+  const rc = S.clients.slice(-4).reverse();
+  document.getElementById('dashClients').innerHTML = rc.length
+    ? rc.map(c=>`<div class="card" style="margin-bottom:.5rem;padding:.9rem">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div><div style="font-family:'Syne',sans-serif;font-size:.75rem;font-weight:700">${c.name}</div>
+          <div style="font-size:.62rem;color:var(--ink3);margin-top:.2rem">${c.property||''} &nbsp;·&nbsp; ${c.type||''}</div></div>
+          <span class="pill pill-new">New</span>
+        </div>
+      </div>`).join('')
+    : '<div class="empty"><div class="empty-icon">◻</div>No clients saved yet.</div>';
+}
+
+// ══════════════════════════════════════════════
+// PROJECTS
+// ══════════════════════════════════════════════
+function saveProject() {
+  const p = {
+    id: 'p'+Date.now(),
+    name: v('pm-name'), client: v('pm-client'), location: v('pm-location'),
+    status: v('pm-status'), start: v('pm-start'), end: v('pm-end'),
+    budget: v('pm-budget'), progress: parseInt(v('pm-progress'))||0,
+    notes: v('pm-notes'), created: Date.now()
+  };
+  if(!p.name){ toast('Enter project name'); return; }
+  S.projects.push(p); save(); closeModal('projectModal'); renderProjects();
+  ['pm-name','pm-client','pm-location','pm-budget','pm-notes','pm-start','pm-end'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('pm-progress').value='0';
+  toast('Project saved');
+}
+
+function renderProjects() {
+  const filter = document.getElementById('projectFilter').value;
+  const list = filter==='all' ? S.projects : S.projects.filter(p=>p.status===filter);
+  document.getElementById('projectsList').innerHTML = list.length
+    ? list.map(p=>`
+      <div class="project-card status-${p.status}" onclick="showProjectDetail('${p.id}')">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div class="project-name">${p.name}</div>
+          <span class="pill pill-${p.status==='active'?'active':p.status==='hold'?'hold':'done'}">${p.status}</span>
+        </div>
+        <div class="project-meta">
+          <span>👤 ${p.client||'—'}</span>
+          <span>📍 ${p.location||'—'}</span>
+          ${p.budget?`<span>₹ ${p.budget}</span>`:''}
+          ${p.end?`<span>Due ${fmtDate(p.end)}</span>`:''}
+        </div>
+        <div class="project-progress"><div class="project-progress-fill" style="width:${p.progress||0}%"></div></div>
+        <div style="font-size:.58rem;color:var(--ink3);margin-top:.3rem">${p.progress||0}% complete</div>
+      </div>`).join('')
+    : '<div class="empty"><div class="empty-icon">⬡</div>No projects found.</div>';
+}
+
+function showProjectDetail(id) {
+  const p = S.projects.find(x=>x.id===id);
+  if(!p) return;
+  document.getElementById('projectDetailContent').innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem">
+      <div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;color:var(--clay)">${p.name}</div>
+        <div style="font-size:.62rem;color:var(--ink3);margin-top:.2rem">${p.client||''} · ${p.location||''}</div>
+      </div>
+      <span class="pill pill-${p.status==='active'?'active':p.status==='hold'?'hold':'done'}">${p.status}</span>
+    </div>
+    <div class="grid-2" style="gap:.6rem;margin-bottom:1rem">
+      <div class="card" style="padding:.7rem"><div style="font-size:.58rem;color:var(--ink3);margin-bottom:.2rem">BUDGET</div><div style="font-size:.85rem">${p.budget||'—'}</div></div>
+      <div class="card" style="padding:.7rem"><div style="font-size:.58rem;color:var(--ink3);margin-bottom:.2rem">TARGET DATE</div><div style="font-size:.85rem">${fmtDate(p.end)||'—'}</div></div>
+    </div>
+    <div style="margin-bottom:.8rem">
+      <div style="font-size:.6rem;color:var(--ink3);margin-bottom:.3rem">PROGRESS</div>
+      <div class="project-progress" style="height:4px"><div class="project-progress-fill" style="width:${p.progress||0}%"></div></div>
+      <div style="font-size:.6rem;color:var(--ink3);margin-top:.2rem">${p.progress||0}%</div>
+    </div>
+    ${p.notes?`<div style="font-size:.7rem;color:var(--ink2);line-height:1.8;margin-bottom:1rem;padding:.8rem;background:var(--bg3);border-left:3px solid var(--clay2)">${p.notes}</div>`:''}
+    <div style="display:flex;gap:.5rem;margin-top:.5rem">
+      <input type="number" id="dp-prog" value="${p.progress||0}" min="0" max="100" style="width:80px" placeholder="%"/>
+      <select id="dp-status" style="width:auto">
+        <option value="active" ${p.status==='active'?'selected':''}>Active</option>
+        <option value="hold" ${p.status==='hold'?'selected':''}>On Hold</option>
+        <option value="done" ${p.status==='done'?'selected':''}>Done</option>
+      </select>
+      <button class="btn btn-solid btn-sm" onclick="updateProject('${id}')">Update</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteProject('${id}')">Delete</button>
+    </div>
+  `;
+  openModal('projectDetailModal');
+}
+
+function updateProject(id) {
+  const p = S.projects.find(x=>x.id===id);
+  if(!p) return;
+  p.progress = parseInt(document.getElementById('dp-prog').value)||0;
+  p.status = document.getElementById('dp-status').value;
+  save(); closeModal('projectDetailModal'); renderProjects(); toast('Project updated');
+}
+
+function deleteProject(id) {
+  if(!confirm('Delete this project?')) return;
+  S.projects = S.projects.filter(x=>x.id!==id);
+  save(); closeModal('projectDetailModal'); renderProjects(); toast('Deleted');
+}
+
+// ══════════════════════════════════════════════
+// CLIENTS
+// ══════════════════════════════════════════════
+function saveClient() {
+  const c = {
+    id:'c'+Date.now(),
+    name:v('cl-name'), phone:v('cl-phone'), email:v('cl-email'),
+    property:v('cl-property'), type:v('cl-type'), budget:v('cl-budget'),
+    notes:v('cl-notes'), created:Date.now()
+  };
+  if(!c.name){ toast('Enter client name'); return; }
+  S.clients.push(c); save(); renderClients(); clearClientForm(); toast('Client saved');
+}
+
+function renderClients() {
+  const el = document.getElementById('clientsList');
+  el.innerHTML = S.clients.length
+    ? S.clients.slice().reverse().map(c=>`
+      <div class="card" style="margin-bottom:.6rem;padding:1rem">
+        <div style="display:flex;justify-content:space-between">
+          <div>
+            <div style="font-family:'Syne',sans-serif;font-size:.78rem;font-weight:700;margin-bottom:.2rem">${c.name}</div>
+            <div style="font-size:.62rem;color:var(--ink3)">${c.property||''} · ${c.type||''}</div>
+            ${c.budget?`<div style="font-size:.62rem;color:var(--clay2);margin-top:.2rem">Budget: ${c.budget}</div>`:''}
+            ${c.phone?`<div style="font-size:.62rem;color:var(--ink3);margin-top:.1rem">📞 ${c.phone}</div>`:''}
+          </div>
+          <button class="btn btn-danger btn-sm" onclick="deleteClient('${c.id}')">✕</button>
+        </div>
+        ${c.notes?`<div style="font-size:.65rem;color:var(--ink3);margin-top:.6rem;padding-top:.5rem;border-top:1px solid var(--border)">${c.notes}</div>`:''}
+      </div>`).join('')
+    : '<div class="empty"><div class="empty-icon">◻</div>No clients yet.</div>';
+}
+
+function deleteClient(id) {
+  S.clients = S.clients.filter(x=>x.id!==id);
+  save(); renderClients(); toast('Removed');
+}
+
+function clearClientForm() {
+  ['cl-name','cl-phone','cl-email','cl-property','cl-budget','cl-notes'].forEach(id=>document.getElementById(id).value='');
+}
+
+// ══════════════════════════════════════════════
+// MOOD BOARD
+// ══════════════════════════════════════════════
+function populateMoodProjectSelect() {
+  const sel = document.getElementById('mm-project');
+  sel.innerHTML = '<option value="general">General / Studio</option>' +
+    S.projects.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+}
+
+function saveMoodItem() {
+  const label = v('mm-label');
+  const url   = v('mm-url');
+  const file  = document.getElementById('mm-file').files[0];
+  const project = v('mm-project');
+  if(!url && !file){ toast('Add a URL or upload an image'); return; }
+  if(file) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      S.moodItems.push({id:'m'+Date.now(), label, src:e.target.result, project});
+      save(); closeModal('moodModal'); renderMoodboard(); toast('Added to board');
+    };
+    reader.readAsDataURL(file);
+  } else {
+    S.moodItems.push({id:'m'+Date.now(), label, src:url, project});
+    save(); closeModal('moodModal'); renderMoodboard(); toast('Added to board');
+  }
+  document.getElementById('mm-label').value='';
+  document.getElementById('mm-url').value='';
+  document.getElementById('mm-file').value='';
+}
+
+function renderMoodboard() {
+  // Populate project filter
+  const moodSel = document.getElementById('moodProject');
+  const curVal  = moodSel.value || 'general';
+  moodSel.innerHTML = '<option value="all">All Projects</option><option value="general">General / Studio</option>' +
+    S.projects.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+  moodSel.value = curVal;
+
+  const filter = moodSel.value;
+  const items = filter==='all' ? S.moodItems : S.moodItems.filter(m=>m.project===filter);
+  const grid = document.getElementById('moodGrid');
+  grid.innerHTML = items.map(m=>`
+    <div class="mood-item">
+      <img src="${m.src}" alt="${m.label}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22><rect fill=%22%23252017%22 width=%221%22 height=%221%22/></svg>'"/>
+      ${m.label?`<div class="mood-item-label">${m.label}</div>`:''}
+      <button class="mood-item-del" onclick="deleteMood('${m.id}')">✕</button>
+    </div>`).join('') +
+    `<div class="mood-add" onclick="openModal('moodModal')"><div class="mood-add-icon">+</div><div>Add Image</div></div>`;
+}
+
+function deleteMood(id) {
+  S.moodItems = S.moodItems.filter(x=>x.id!==id);
+  save(); renderMoodboard(); toast('Removed');
+}
+
+document.getElementById('moodProject').addEventListener('change', renderMoodboard);
+
+// ══════════════════════════════════════════════
+// LINKS
+// ══════════════════════════════════════════════
+function populateLinkCatSelect() {
+  document.getElementById('lm-cat').innerHTML = S.linkCats.map(c=>`<option>${c}</option>`).join('');
+}
+
+function saveCategory() {
+  const name = v('cm-name').trim();
+  if(!name){ toast('Enter category name'); return; }
+  if(S.linkCats.includes(name)){ toast('Category exists'); return; }
+  S.linkCats.push(name); save(); closeModal('catModal'); renderLinks(); toast('Category created');
+  document.getElementById('cm-name').value='';
+}
+
+function saveLink() {
+  const l = {id:'l'+Date.now(), label:v('lm-label'), url:v('lm-url'), cat:v('lm-cat')};
+  if(!l.url){ toast('Enter a URL'); return; }
+  let url = l.url;
+  if(!/^https?:\/\//i.test(url)) url = 'https://'+url;
+  l.url = url;
+  S.links.push(l); save(); closeModal('linkModal'); renderLinks(); toast('Link saved');
+  document.getElementById('lm-label').value='';
+  document.getElementById('lm-url').value='';
+}
+
+function renderLinks() {
+  const el = document.getElementById('linksList');
+  const html = S.linkCats.map(cat => {
+    const catLinks = S.links.filter(l=>l.cat===cat);
+    return `
+      <div class="link-cat">
+        <div class="link-cat-header" onclick="toggleCat(this)">
+          <span class="link-cat-name">${cat}</span>
+          <div style="display:flex;align-items:center;gap:.6rem">
+            <span style="font-size:.6rem;color:var(--ink3)">${catLinks.length} link${catLinks.length!==1?'s':''}</span>
+            <span class="link-cat-toggle">▾</span>
+          </div>
+        </div>
+        <div class="link-cat-body">
+          ${catLinks.map(l=>`
+            <div class="link-row">
+              <span class="link-row-label">${l.label||l.url}</span>
+              <a href="${l.url}" target="_blank">${l.url}</a>
+              <button class="link-row-del" onclick="deleteLink('${l.id}')">✕</button>
+            </div>`).join('')}
+          ${catLinks.length===0?`<div style="padding:.5rem .8rem;font-size:.62rem;color:var(--ink4);border:1px solid var(--border);border-top:none">No links yet in this category</div>`:''}
+        </div>
+      </div>`;
+  }).join('');
+  el.innerHTML = html;
+}
+
+function toggleCat(header) {
+  const body = header.nextElementSibling;
+  const arrow = header.querySelector('.link-cat-toggle');
+  body.style.display = body.style.display==='none' ? '' : 'none';
+  arrow.textContent = body.style.display==='none' ? '▸' : '▾';
+}
+
+function deleteLink(id) {
+  S.links = S.links.filter(x=>x.id!==id);
+  save(); renderLinks(); toast('Removed');
+}
+
+// ══════════════════════════════════════════════
+// CLIENT KIT — 6 DOCUMENTS
+// ══════════════════════════════════════════════
+let activeKitDoc = 0;
+
+// ── KIT DEFINITIONS ──────────────────────────
+const KIT_DOCS = [
+
+// ── DOC 0: CLIENT DISCOVERY BRIEF ────────────
+{
+  id:'discovery', title:'01 — Client Discovery Brief',
+  desc:'Complete before or during the first consultation. Every answer helps design with intention.',
+  render(data){
+    data = data||{};
+    return `
+    <div class="kit-doc">
+      <div class="kit-note">Send this to the client at least 24 hours before the first meeting — or fill it together during the consultation.</div>
+      <div class="kit-row">
+        ${kf('Client Name(s)','d-name','text','e.g. Mr. & Mrs. Sharma',data)}
+        ${kf('Project Reference','d-ref','text','e.g. Sharma Villa · Goa',data)}
+      </div>
+      <div class="kit-row">
+        ${kf('Date','d-date','date','',data)}
+        ${kf('Designer','d-designer','text','Sindhu Kodihal',data)}
+      </div>
+
+      <div class="kit-section">
+        <div class="kit-section-hdr">Section 1 — About You & Your Life</div>
+        <div class="kit-row">
+          ${kf('Children & Ages','d-children','text','e.g. 2 kids, ages 5 and 9',data)}
+          ${kf('Pets','d-pets','text','Breed, size, indoor/outdoor',data)}
+        </div>
+        <div class="kit-row">
+          ${kf('Frequent Guests','d-guests','text','e.g. Parents visit 3 months/year',data)}
+          ${kf('Work From Home?','d-wfh','select:Yes|No|Occasionally',data)}
+        </div>
+        ${kf('Primary Use of Home','d-use','select:Full-time Residence|Holiday Home|Investment Rental',data)}
+        ${kf('How often do you entertain?','d-entertain','select:Rarely|Monthly|Weekly|Often',data)}
+        ${kf('Typical morning / evening routine','d-routine','textarea','e.g. Early riser, reads on balcony, long dinners on weekends',data)}
+        ${kf('What frustrates you most about your current home?','d-pain1','textarea','What doesn\'t work? Be specific.',data)}
+        ${kf('Second frustration','d-pain2','textarea','',data)}
+      </div>
+
+      <div class="kit-section">
+        <div class="kit-section-hdr">Section 2 — Aesthetics & Style</div>
+        <div class="kit-row">
+          ${kf('Word 1 — describe your ideal home','d-word1','text','e.g. Calm',data)}
+          ${kf('Word 2','d-word2','text','e.g. Layered',data)}
+        </div>
+        ${kf('Word 3','d-word3','text','e.g. Tactile',data)}
+        ${kf('Instagram accounts / Pinterest boards you love','d-refs','textarea','@handle or describe the vibe',data)}
+        ${kf('A hotel / restaurant / home you loved','d-loved','text','Name and location if possible',data)}
+        ${kf('A look or style you absolutely do NOT want','d-hated','textarea','Describe clearly',data)}
+        <div class="kit-row">
+          ${kf('Flooring preference','d-floor','text','e.g. Wood, stone, tile, polished concrete',data)}
+          ${kf('Wall treatment','d-wall','text','e.g. Paint, texture, wallpaper, panel',data)}
+        </div>
+        <div class="kit-row">
+          ${kf('Hardware / fixture finish','d-hardware','text','e.g. Matte black, brushed brass, chrome',data)}
+          ${kf('Colour temperature','d-coltemp','select:Warm|Neutral|Cool|Mix',data)}
+        </div>
+        <div class="kit-row">
+          ${kf('Colours you want','d-colours','text','Describe or name',data)}
+          ${kf('Colours you never want','d-nocolours','text','',data)}
+        </div>
+      </div>
+
+      <div class="kit-section">
+        <div class="kit-section-hdr">Section 3 — Functionality & Priorities</div>
+        ${kf('Room priority notes','d-priority','textarea','Which rooms matter most? Where should budget concentrate?',data)}
+        ${kf('Storage personality','d-storage','select:Minimalist|Collector|Somewhere in between',data)}
+        ${kf('Biggest storage problem today','d-storagepain','text','',data)}
+        ${kf('Special storage needs','d-storagespecial','text','e.g. Wine, books, art, instruments, sports equipment',data)}
+        <div class="kit-row">
+          ${kf('Smart home interest','d-smarthome','select:Yes — full integration|Basic|No preference',data)}
+          ${kf('AV / home theatre setup?','d-av','text','e.g. Built-in speakers, projector, home theatre',data)}
+        </div>
+      </div>
+
+      <div class="kit-section">
+        <div class="kit-section-hdr">Section 4 — Project Readiness</div>
+        <div class="kit-row">
+          ${kf('Ideal completion / move-in date','d-deadline','date','',data)}
+          ${kf('Is this date fixed or flexible?','d-deadlineflx','select:Fixed|Flexible|Very flexible',data)}
+        </div>
+        ${kf('Any event driving the deadline?','d-event','text','e.g. Wedding, rental season, family visit',data)}
+        <div class="kit-row">
+          ${kf('Interior design budget (approx.)','d-budget','text','₹ _____ to ₹ _____',data)}
+          ${kf('Budget inclusive of furniture?','d-budgetfurn','select:Yes|No|Partially',data)}
+        </div>
+        <div class="kit-row">
+          ${kf('Civil / renovation budget (separate)?','d-civil','text','₹ _____ or N/A',data)}
+          ${kf('Budget flexibility','d-budgetflx','select:Fixed|Can stretch for the right reason|Very flexible',data)}
+        </div>
+        ${kf('Who has final decision-making authority?','d-decision','text','',data)}
+        ${kf('Preferred communication channel','d-comms','select:WhatsApp|Email|Calls|In-person meetings',data)}
+        ${kf('How quickly can you typically approve something?','d-approvalspeed','select:Same day|Within a week|Need 2+ weeks',data)}
+      </div>
+
+      <div class="kit-section">
+        <div class="kit-section-hdr">Section 5 — Open Notes</div>
+        ${kf('Anything else we should know before we begin?','d-notes','textarea','A constraint, a dream, a story about why this project matters...',data,4)}
+      </div>
+    </div>`;
+  }
+},
+
+// ── DOC 1: ROOM-BY-ROOM SCOPE ────────────────
+{
+  id:'scope', title:'02 — Room-by-Room Scope Template',
+  desc:'Define what is and is not included in each space. Fill before writing any proposal.',
+  render(data){
+    data = data||{};
+    const rooms = [
+      {name:'Living Room', items:['Furniture layout & space planning','Sofa selection & upholstery','Coffee & side tables','TV unit / entertainment wall design','Bookshelf / display unit','Ambient lighting layout & fixtures','Task / accent lighting','Window treatment','Rug selection','Wall treatment','False ceiling design','Flooring specification','Decorative accessories curation']},
+      {name:'Dining Room', items:['Dining table & chairs','Sideboard / buffet unit','Pendant light / chandelier','Bar unit or drinks cabinet','Wall treatment','Art / mirror specification']},
+      {name:'Kitchen', items:['Layout design (L/U/straight/island)','Upper & lower cabinet design','Countertop material & edge','Backsplash tile design','Sink & tap specification','Appliance cutouts / integration','Pantry / storage design','Lighting — task & ambient','Hardware specification','Flooring specification']},
+      {name:'Master Bedroom', items:['Bed & headboard design','Bedside tables','Wardrobe design (L/parallel/walk-in)','Dressing table / vanity unit','Study / work corner','Ambient lighting layout','Window treatment','Wall treatment','Flooring specification','Rug specification','Loose furniture (ottoman, bench, chair)']},
+      {name:'Guest Bedroom(s)', items:['Bed & headboard','Wardrobe design','Bedside tables','Lighting layout','Window treatment','Wall treatment','Flooring']},
+      {name:"Children's Room", items:['Bed configuration','Study table & storage','Wardrobe design','Play / activity area','Lighting','Wall treatment / theme','Flooring (child-safe material)']},
+      {name:'Bathrooms', items:['Floor & wall tile selection','Vanity unit design','Wash basin specification','Tap & fixture specification','Mirror / mirror cabinet','Shower / bath area design','Accessories specification','Lighting','Ventilation fan']},
+      {name:'Balcony / Outdoor', items:['Outdoor furniture','Planters & landscaping concept','Outdoor lighting','Privacy screening / shade','Flooring / decking material']},
+      {name:'Utility / Service', items:['Laundry area layout','Storage shelving / unit design','Ironing station',"Maid's room / bathroom"]},
+    ];
+    return `
+    <div class="kit-doc">
+      <div class="kit-note">Go room by room. For each item mark Yes / No / TBD and add specification notes. This document becomes the scope annex to your proposal.</div>
+      <div class="kit-row">
+        ${kf('Project Reference','sc-ref','text','e.g. Sharma Villa · Goa',data)}
+        ${kf('Client','sc-client','text','',data)}
+      </div>
+      <div class="kit-row">
+        ${kf('Date','sc-date','date','',data)}
+        ${kf('Property','sc-property','text','Address / flat / unit',data)}
+      </div>
+      ${rooms.map((room,ri)=>`
+          <div class="kit-section">
+          <div class="kit-section-hdr">${room.name}</div>
+          <div class="table-wrap"><table class="scope-table">
+            <thead><tr><th style="width:52%">Scope Item</th><th style="width:20%">Status</th><th>Notes / Specification</th></tr></thead>
+            <tbody>
+              ${room.items.map((item,ii)=>`
+                <tr>
+                  <td>${item}</td>
+                  <td><select id="sc-${ri}-${ii}-s" onchange="kitFieldChange()" style="width:100%">
+                    <option value="" ${!data['sc-'+ri+'-'+ii+'-s']?'selected':''}>—</option>
+                    <option value="yes" ${data['sc-'+ri+'-'+ii+'-s']==='yes'?'selected':''}>✓ Yes</option>
+                    <option value="no" ${data['sc-'+ri+'-'+ii+'-s']==='no'?'selected':''}>✕ No</option>
+                    <option value="tbd" ${data['sc-'+ri+'-'+ii+'-s']==='tbd'?'selected':''}>⋯ TBD</option>
+                  </select></td>
+                  <td><input type="text" id="sc-${ri}-${ii}-n" value="${data['sc-'+ri+'-'+ii+'-n']||''}" oninput="kitFieldChange()" placeholder="specification..."/></td>
+                </tr>`).join('')}
+            </tbody>
+          </table></div>
+          <div class="kit-field"><label>Additional notes for ${room.name}</label><textarea id="sc-${ri}-notes" oninput="kitFieldChange()" placeholder="Any room-specific considerations...">${data['sc-'+ri+'-notes']||''}</textarea></div>
+        </div>`).join('')}
+      <div class="kit-section">
+        <div class="kit-section-hdr">Client Sign-off</div>
+        <div class="kit-row">
+          ${kf('Client name & date (scope confirmed)','sc-signoff','text','Confirms scope before proposal is issued',data)}
+          ${kf('Confirmed by (designer)','sc-designer-sign','text','',data)}
+        </div>
+      </div>
+    </div>`;
+  }
+},
+
+// ── DOC 2: INCLUSIONS & EXCLUSIONS ───────────
+{
+  id:'clauses', title:'03 — Inclusions & Exclusions Clauses',
+  desc:'Select and customise clauses for your proposal. Tick the ones that apply, edit the text.',
+  render(data){
+    data = data||{};
+    const inclusions = [
+      ['Design Concept & Direction','Development of a design concept including mood board, material palette, colour scheme, and spatial narrative. One revision round is included.'],
+      ['Space Planning & Furniture Layout','Scaled furniture layout drawings for all rooms within scope. Minimum one layout option per room.'],
+      ['Material & Finish Specification','Selection and specification of all flooring, wall treatment, ceiling treatment, and surface finishes within scope.'],
+      ['Furniture Selection & Procurement Support','Identification, specification, and procurement facilitation for all loose furniture within scope. Final purchase is the client\'s responsibility.'],
+      ['Joinery / Millwork Design','Design drawings and specifications for all bespoke joinery within scope (wardrobes, cabinets, TV units, kitchen, etc.).'],
+      ['Lighting Design','Ambient, task, and accent lighting layout for all rooms in scope. Fixture selection and specification included. Electrical execution is the contractor\'s responsibility.'],
+      ['Window Treatment Specification','Specification of curtain/blind/sheer type, fabric, colour, and mechanism for all windows within scope.'],
+      ['Vendor & Contractor Coordination','Coordination with furniture vendors, material suppliers, and the site contractor for items within scope.'],
+      ['Client Presentations','Minimum two formal presentations (concept and final design). Additional presentations attract a supplementary fee.'],
+    ];
+    const exclusions = [
+      ['Civil & Structural Work','Demolition, construction, structural alterations, waterproofing, and associated work are excluded.'],
+      ['Electrical & Plumbing Execution','All electrical, plumbing, and HVAC work is excluded. The designer provides specifications; execution is the contractor\'s responsibility.'],
+      ['False Ceiling Electrical Routing','Electrical routing within false ceilings is excluded. The designer provides a lighting layout; the contractor must route accordingly.'],
+      ['Loose Accessories & Art Procurement','Artwork, decorative accessories, plants, and personalisation items are not included unless a separate styling package is agreed.'],
+      ['Project Management / PMC Services','Day-to-day site supervision and project management are not included unless a separate PMC fee is agreed.'],
+      ['Structural / MEP Consultant Fees','Fees for structural engineers, MEP consultants, or other specialist consultants are not included in the design fee.'],
+      ['Permit & Approval Fees','Municipal permissions, NOCs, layout approvals, and related statutory fees are the client\'s responsibility.'],
+      ['Furniture & Material Purchases','The design fee covers specification and procurement support only. The cost of furniture, materials, and products is borne by the client.'],
+      ['Post-Handover Modifications','Changes requested after handover are billable at the current hourly rate.'],
+      ['Properties Not Listed in Scope','Any rooms, areas, or properties not explicitly named in the agreed scope are excluded.'],
+    ];
+    const feeItems = [
+      ['Design Revisions Beyond Agreed Rounds','The base scope includes [insert number] round(s) of revisions. Each additional round: ₹ ________.'],
+      ['Additional Site Visits','Each visit beyond the agreed number: ₹ ________ plus travel if applicable.'],
+      ['Scope Additions Mid-Project','Any room or service added after sign-off requires a written amendment and additional fee.'],
+      ['Rush / Expedited Delivery','Work on a compressed timeline attracts a 25% premium on applicable fees.'],
+      ['Custom / Overseas Product Sourcing','Sourcing from custom or overseas manufacturers: ₹ ________ per hour.'],
+    ];
+    const clauseBlock = (items, prefix) => items.map((c,i)=>`
+      <div class="clause-box" id="${prefix}-box-${i}">
+        <div class="clause-box-hdr" onclick="toggleClause('${prefix}-box-${i}')">
+          <input type="checkbox" id="${prefix}-chk-${i}" ${data[prefix+'-chk-'+i]!==false?'checked':''} onclick="event.stopPropagation();kitFieldChange()" onchange="kitFieldChange()"/>
+          <div class="clause-box-title">${c[0]}</div>
+          <span style="font-size:.7rem;color:var(--ink3)">▾</span>
+        </div>
+        <div class="clause-box-body">
+          <textarea id="${prefix}-text-${i}" oninput="kitFieldChange()" style="min-height:56px;width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--ink2);font-family:'DM Mono',monospace;font-size:.67rem;padding:.4rem .6rem;outline:none">${data[prefix+'-text-'+i]||c[1]}</textarea>
+        </div>
+      </div>`).join('');
+    return `
+    <div class="kit-doc">
+      <div class="kit-note">Tick the clauses that apply to your project. Expand any clause to edit the language. Copy the selected clauses into your proposal.</div>
+      <div class="kit-row">
+        ${kf('Project Reference','cl-ref','text','',data)}
+        ${kf('Client','cl-client','text','',data)}
+      </div>
+      <div class="kit-section">
+        <div class="kit-section-hdr">Part A — Standard Inclusions</div>
+        ${clauseBlock(inclusions,'inc')}
+      </div>
+      <div class="kit-section">
+        <div class="kit-section-hdr">Part B — Standard Exclusions</div>
+        ${clauseBlock(exclusions,'exc')}
+      </div>
+      <div class="kit-section">
+        <div class="kit-section-hdr">Part C — Additional Fee Triggers</div>
+        ${clauseBlock(feeItems,'fee')}
+      </div>
+      <div class="kit-section">
+        <div class="kit-section-hdr">Part D — Client Sign-off</div>
+        <div class="kit-row">
+          ${kf('Client signature / name','cl-sign','text','',data)}
+          ${kf('Date','cl-signdate','date','',data)}
+        </div>
+        ${kf('Project reference','cl-projref','text','',data)}
+      </div>
+    </div>`;
+  }
+},
+
+// ── DOC 3: NRI MODULE ─────────────────────────
+{
+  id:'nri', title:'04 — NRI Project Module',
+  desc:'For clients overseas or unable to be on site. Append to the Discovery Brief.',
+  render(data){
+    data = data||{};
+    const materials = ['Floor tiles','Wall tiles / treatment','Countertop material','Sofa / upholstery fabric','Curtain / blind fabric','Bedroom headboard','Hardware finish','Outdoor material'];
+    return `
+    <div class="kit-doc">
+      <div class="kit-note">For projects where the client cannot visit regularly — NRI buyers or clients based in another city. Covers remote approvals, material sign-off, site supervision clarity, and financial protocols.</div>
+
+      <div class="kit-section">
+        <div class="kit-section-hdr">Module A — Location & Availability</div>
+        <div class="kit-row">
+          ${kf('Country & city of residence','nri-country','text','e.g. Dubai, UAE',data)}
+          ${kf('Time zone','nri-tz','text','e.g. GST +4',data)}
+        </div>
+        ${kf('Planned visits to India (dates)','nri-visits','text','',data)}
+        ${kf('Will you visit the site during the project?','nri-sitevisit','select:Yes — confirm how many times|Possibly|No',data)}
+        <div class="kit-row">
+          ${kf('Best time for calls (IST)','nri-calltime','text','e.g. 7–9pm IST',data)}
+          ${kf('Preferred communication','nri-comms','select:WhatsApp Video|Zoom|Email|Phone',data)}
+        </div>
+      </div>
+
+      <div class="kit-section">
+        <div class="kit-section-hdr">Module B — Local Point of Contact</div>
+        <div class="kit-note">Strongly recommend a trusted person in India who can attend site visits and make time-sensitive decisions.</div>
+        <div class="kit-row">
+          ${kf('Contact name','nri-local-name','text','',data)}
+          ${kf('Relationship','nri-local-rel','text','e.g. Sibling, parent, property manager',data)}
+        </div>
+        <div class="kit-row">
+          ${kf('WhatsApp number','nri-local-phone','text','',data)}
+          ${kf('Email','nri-local-email','text','',data)}
+        </div>
+        <div class="kit-row">
+          ${kf('Can they approve samples?','nri-local-samples','select:Yes|No',data)}
+          ${kf('Can they approve payments?','nri-local-payments','select:Yes|No',data)}
+        </div>
+      </div>
+
+      <div class="kit-section">
+        <div class="kit-section-hdr">Module C — Remote Approval Protocol</div>
+        ${kf('How quickly can you approve decisions?','nri-approvaltime','select:Within 24 hours|Within 48 hours|Within 72 hours|Within 1 week',data)}
+        ${kf('Approval method','nri-approvalmethod','select:WhatsApp message|Email|Signed PDF|Any written form',data)}
+        ${kf('Urgent on-site decision protocol','nri-urgent','select:Contact local person|Call me directly|Designer decides within agreed brief',data)}
+        ${kf('Do you want physical samples couriered overseas?','nri-samples','select:Yes|No — video approval is sufficient',data)}
+        ${kf('Courier address (if yes)','nri-courier','textarea','Full overseas address',data,2)}
+      </div>
+
+      <div class="kit-section">
+        <div class="kit-section-hdr">Module D — Material Sign-off Tracker</div>
+        <div class="table-wrap"><table class="scope-table">
+          <thead><tr><th>Category</th><th>Video Shared</th><th>Client Approved</th><th>Approved By</th></tr></thead>
+          <tbody>
+            ${materials.map((m,i)=>`
+              <tr>
+                <td>${m}</td>
+                <td style="text-align:center"><input type="checkbox" id="nri-mat-v-${i}" ${data['nri-mat-v-'+i]?'checked':''} onchange="kitFieldChange()" style="width:14px;height:14px;accent-color:var(--clay)"/></td>
+                <td style="text-align:center"><input type="checkbox" id="nri-mat-a-${i}" ${data['nri-mat-a-'+i]?'checked':''} onchange="kitFieldChange()" style="width:14px;height:14px;accent-color:var(--clay)"/></td>
+                <td><input type="text" id="nri-mat-by-${i}" value="${data['nri-mat-by-'+i]||''}" oninput="kitFieldChange()" placeholder="name"/></td>
+              </tr>`).join('')}
+          </tbody>
+        </table></div>
+      </div>
+
+      <div class="kit-section">
+        <div class="kit-section-hdr">Module E — Site Supervision</div>
+        ${kf('Primary contractor (name & contact)','nri-contractor','text','',data)}
+        ${kf('PMC / project manager appointed?','nri-pmc','select:Yes — name:|No',data)}
+        <div class="kit-row">
+          ${kf('Who resolves day-to-day site issues?','nri-siteissues','select:Contractor|Local contact|PMC|Designer (billable)',data)}
+          ${kf('Who approves contractor invoices?','nri-invoices','text','',data)}
+        </div>
+      </div>
+
+      <div class="kit-section">
+        <div class="kit-section-hdr">Module F — Financial Protocols</div>
+        <div class="kit-row">
+          ${kf('Currency of payment','nri-currency','select:₹ INR|USD|AED|GBP|Other',data)}
+          ${kf('Payment method','nri-payment','select:Bank transfer|Wise|PayPal|Other',data)}
+        </div>
+        ${kf('Who handles vendor payments in India?','nri-vendorpay','select:Client directly|Local contact|Designer (with advance)',data)}
+        <div class="kit-row">
+          ${kf('Advance payment (% of FF&E cost)','nri-advance','text','e.g. 30%',data)}
+          ${kf('Escalation clause (material cost increase %)','nri-escalation','text','e.g. >10% triggers client approval',data)}
+        </div>
+      </div>
+    </div>`;
+  }
+},
+
+// ── DOC 4: BUDGET WORKSHEET ───────────────────
+{
+  id:'budget', title:'05 — Budget Calibration Worksheet',
+  desc:'Align client budget with real costs. Per sq ft benchmarks for Goa & Pune.',
+  render(data){
+    data = data||{};
+    const goaBench = [
+      ['Full villa interior','₹1,800–2,500','₹2,800–4,000','₹4,500–8,000+'],
+      ['Living & dining','₹1,500–2,200','₹2,500–3,800','₹4,000–7,000+'],
+      ['Master bedroom','₹1,200–1,800','₹2,000–3,200','₹3,500–6,000+'],
+      ['Guest bedroom','₹800–1,200','₹1,400–2,000','₹2,200–4,000+'],
+      ['Kitchen (modular)','₹1,800–2,800','₹3,000–5,000','₹5,500–10,000+'],
+      ['Bathroom (per bathroom)','₹1,200–2,000','₹2,200–3,800','₹4,000–8,000+'],
+      ['Outdoor / pool area','₹800–1,400','₹1,600–2,800','₹3,000–6,000+'],
+    ];
+    const puneBench = [
+      ['Full apartment interior','₹1,200–1,800','₹2,000–3,000','₹3,500–6,000+'],
+      ['Living & dining','₹1,000–1,600','₹1,800–2,800','₹3,200–5,500+'],
+      ['Master bedroom','₹900–1,400','₹1,600–2,400','₹2,800–5,000+'],
+      ['Secondary bedroom(s)','₹600–900','₹1,000–1,600','₹1,800–3,000+'],
+      ['Kitchen (modular)','₹1,500–2,200','₹2,500–4,000','₹4,500–8,000+'],
+      ['Bathroom (per bathroom)','₹900–1,400','₹1,600–2,800','₹3,000–6,000+'],
+      ['Study / home office','₹700–1,200','₹1,400–2,200','₹2,500–4,500+'],
+    ];
+    const benchTable = (rows) => `
+      <div class="table-wrap"><table class="bgt-table">
+        <thead><tr><th>Space</th><th>Standard</th><th>Premium</th><th>Luxury</th></tr></thead>
+        <tbody>${rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join('')}</tbody>
+      </table></div>`;
+    return `
+    <div class="kit-doc">
+      <div class="kit-note">These are indicative per sq ft ranges (BUA). Actual costs vary by material brand, contractor, site conditions, and complexity. Use as a starting point for client conversations — not as a quotation.</div>
+
+      <div class="kit-section">
+        <div class="kit-section-hdr">Part 1 — Goa Market Benchmarks (per sq ft BUA)</div>
+        <div style="font-size:.62rem;color:var(--ink3);margin-bottom:.6rem">Inclusive of furniture, fixtures, and designer fees. Exclusive of civil work.</div>
+        ${benchTable(goaBench)}
+      </div>
+
+      <div class="kit-section">
+        <div class="kit-section-hdr">Part 2 — Pune Market Benchmarks (per sq ft carpet area)</div>
+        ${benchTable(puneBench)}
+        <div style="font-size:.62rem;color:var(--ink3);margin-top:.4rem">Standard: Good quality Indian brands, ready-made furniture · Premium: Custom joinery, mid-range imports · Luxury: Custom everything, designer brands, full styling</div>
+      </div>
+
+      <div class="kit-section">
+        <div class="kit-section-hdr">Part 3 — Client Budget Matrix</div>
+        <div class="kit-row">
+          ${kf('Property location','bg-loc','select:Goa|Pune|Other',data)}
+          ${kf('Carpet / BUA area (sq ft)','bg-area','text','',data)}
+        </div>
+        <div class="kit-row">
+          ${kf('No. of bedrooms','bg-beds','text','',data)}
+          ${kf('No. of bathrooms','bg-baths','text','',data)}
+        </div>
+        <div class="kit-row">
+          ${kf('Client stated budget','bg-stated','text','₹',data)}
+          ${kf('Budget per sq ft (calculated)','bg-persqft','text','₹',data)}
+        </div>
+        <div class="kit-row">
+          ${kf('This aligns with','bg-tier','select:Standard Finish|Premium Finish|Luxury Finish|Below Standard — scope adjustment needed',data)}
+          ${kf('Gap to preferred tier (if any)','bg-gap','text','₹',data)}
+        </div>
+        ${kf('Agreed scope adjustment approach','bg-adjustment','textarea','e.g. Phase the project — living areas now, bedrooms later. Use ready-made in guest rooms.',data,3)}
+      </div>
+
+      <div class="kit-section">
+        <div class="kit-section-hdr">Part 4 — Designer Fee Reference</div>
+        <div class="table-wrap"><table class="bgt-table">
+          <thead><tr><th>Fee Model</th><th>Typical Range</th><th>Best For</th></tr></thead>
+          <tbody>
+            <tr><td>% of project cost</td><td>8–15%</td><td>Larger, high-value projects</td></tr>
+            <tr><td>Per sq ft (design fee only)</td><td>₹75–250/sq ft</td><td>Mid-range apartments</td></tr>
+            <tr><td>Fixed project fee</td><td>Negotiated</td><td>Well-defined, bounded projects</td></tr>
+            <tr><td>Hourly rate</td><td>₹2,000–5,000/hr</td><td>Consultations, add-ons</td></tr>
+            <tr><td>Retainer + procurement %</td><td>Monthly + 10–20% FF&E</td><td>Ongoing complex projects</td></tr>
+          </tbody>
+        </table></div>
+        <div class="kit-row" style="margin-top:.8rem">
+          ${kf('Agreed fee model for this project','bg-feemodel','text','',data)}
+          ${kf('Agreed fee amount','bg-fee','text','₹',data)}
+        </div>
+      </div>
+    </div>`;
+  }
+},
+
+// ── DOC 5: FIRST MEETING CHECKLIST ───────────
+{
+  id:'meeting', title:'06 — First Meeting Checklist',
+  desc:'Never leave a client meeting with missing information. 40+ checkpoints.',
+  render(data){
+    data = data||{};
+    const sections = [
+      {title:'Before the Meeting — Preparation', items:[
+        'Client Discovery Brief (Doc 01) sent at least 24 hours before',
+        'Meeting agenda shared via WhatsApp or email',
+        'Your portfolio / lookbook sent for reference',
+        'Parking / access instructions confirmed if visiting site',
+      ]},
+      {title:'During the Meeting — Client Basics', items:[
+        'Full name(s) of all decision-makers confirmed',
+        'WhatsApp number (primary contact) collected',
+        'Email address confirmed',
+        'Relationship between decision-makers understood',
+      ]},
+      {title:'During the Meeting — Project Basics', items:[
+        'Full property address confirmed',
+        'Property type confirmed (apartment / villa / holiday home)',
+        'Current state: possession taken / under construction / occupied',
+        'Approximate area in sq ft noted',
+        'Complete list of rooms to be designed confirmed',
+        'Primary use confirmed (residence / holiday / rental)',
+      ]},
+      {title:'During the Meeting — Design Direction', items:[
+        'Three words to describe ideal home noted',
+        'At least 2–3 reference images discussed',
+        'At least 1 thing they have seen and loved',
+        'At least 1 thing they do NOT want',
+        'Colour direction discussed (warm / cool / neutral)',
+        'Key lifestyle habits noted (entertaining, WFH, children, pets)',
+        'Flooring preference discussed',
+        'Wall treatment preference noted',
+        'Hardware / fixture finish preference noted',
+      ]},
+      {title:'During the Meeting — Scope & Budget', items:[
+        'List of rooms in scope written down',
+        'List of rooms NOT in scope noted',
+        'Civil work — separate or designer involvement?',
+        'Contractor: appointed / being sourced / client handles',
+        'Client has shared a budget range (not just "reasonable")',
+        'Budget inclusive of furniture — confirmed',
+        'Budget fixed or flexible — noted',
+        'Benchmark conversation completed if budget is unclear',
+        'Ideal completion / move-in date stated',
+        'Any hard deadline noted (event, rental season)',
+        'Timeline fixed or flexible — confirmed',
+      ]},
+      {title:'After the Meeting — Follow-up', items:[
+        'Thank-you message sent within 24 hours',
+        'Meeting summary shared with client',
+        'Any unanswered questions flagged to client',
+        'Discovery Brief sent if not yet completed',
+        'Next meeting / site visit scheduled',
+        'Scope template (Doc 02) filled in',
+        'Budget matrix (Doc 05) completed',
+        'Inclusions / exclusions identified (Doc 03)',
+        'NRI module completed if applicable (Doc 04)',
+        'Proposal drafted and reviewed internally',
+      ]},
+    ];
+    const renderSection = (sec, si) => `
+      <div class="kit-section">
+        <div class="kit-section-hdr">${sec.title}</div>
+        ${sec.items.map((item,ii)=>{
+          const key = 'mtg-'+si+'-'+ii;
+          const done = data[key]===true;
+          return `<div class="kit-check-item${done?' done':''}" id="kci-${si}-${ii}">
+            <input type="checkbox" id="kchk-${si}-${ii}" ${done?'checked':''} onchange="toggleKitCheck(${si},${ii},this.checked)"/>
+            <label for="kchk-${si}-${ii}">${item}</label>
+          </div>`;
+        }).join('')}
+      </div>`;
+    const total = sections.reduce((a,s)=>a+s.items.length,0);
+    const done = sections.reduce((a,s,si)=>a+s.items.filter((_,ii)=>data['mtg-'+si+'-'+ii]===true).length,0);
+    return `
+    <div class="kit-doc">
+      <div class="kit-row" style="margin-bottom:.6rem">
+        ${kf('Client / Meeting','mtg-client','text','e.g. Mehta Residence · First Consultation',data)}
+        ${kf('Date','mtg-date','date','',data)}
+      </div>
+      <div style="margin-bottom:1rem">
+        <div style="font-size:.62rem;color:var(--ink3);margin-bottom:.3rem">${done} of ${total} complete</div>
+        <div class="project-progress" style="height:3px"><div class="project-progress-fill" style="width:${total?Math.round(done/total*100):0}%"></div></div>
+      </div>
+      ${sections.map((sec,si)=>renderSection(sec,si)).join('')}
+      <div class="kit-section">
+        <div class="kit-section-hdr">Notes From This Meeting</div>
+        ${kf('','mtg-notes','textarea','Key observations, decisions made, action items...',data,5)}
+      </div>
+    </div>`;
+  }
+},
+
+]; // end KIT_DOCS
+
+// ── KIT FIELD HELPER ─────────────────────────
+function kf(label, id, type, placeholder, data, rows) {
+  data = data||{};
+  const val = data[id]||'';
+  if(type.startsWith('select:')) {
+    const opts = type.replace('select:','').split('|');
+    return `<div class="kit-field"><label>${label}</label><select id="${id}" onchange="kitFieldChange()">
+      ${opts.map(o=>`<option ${val===o?'selected':''}>${o}</option>`).join('')}
+    </select></div>`;
+  }
+  if(type==='textarea') return `<div class="kit-field">${label?`<label>${label}</label>`:''}<textarea id="${id}" rows="${rows||3}" oninput="kitFieldChange()" placeholder="${placeholder||''}">${val}</textarea></div>`;
+  return `<div class="kit-field"><label>${label}</label><input type="${type}" id="${id}" value="${val.replace(/"/g,'&quot;')}" oninput="kitFieldChange()" placeholder="${placeholder||''}"/></div>`;
+}
+
+// ── KIT STATE ────────────────────────────────
+
+function kitKey(docIdx, projectTag) {
+  const tag = projectTag||'general';
+  return 'doc'+docIdx+'_'+tag;
+}
+
+function initKit() {
+  // populate client tag select
+  const sel = document.getElementById('kitClientTag');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">— General (no project) —</option>' +
+    S.projects.map(p=>`<option value="${p.id}"${cur===p.id?' selected':''}>${p.name}</option>`).join('');
+  renderKitDoc();
+}
+
+function renderKitDoc() {
+  const docIdx = activeKitDoc;
+  const tag = document.getElementById('kitClientTag')?.value||'';
+  const key = kitKey(docIdx, tag);
+  const data = (S.kitData&&S.kitData[key]) ? JSON.parse(JSON.stringify(S.kitData[key])) : {};
+  const doc = KIT_DOCS[docIdx];
+  document.getElementById('kitDocContainer').innerHTML = `
+    <div style="margin-bottom:.5rem">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;color:var(--clay);margin-bottom:.2rem">${doc.title}</div>
+      <div style="font-size:.67rem;color:var(--ink3);margin-bottom:.8rem">${doc.desc}</div>
+    </div>
+    ${doc.render(data)}`;
+  kitDirty = false;
+}
+
+function loadKitDoc() { renderKitDoc(); }
+
+let kitDirty = false;
+let kitSaveTimer = null;
+
+function kitFieldChange() {
+  kitDirty = true;
+  clearTimeout(kitSaveTimer);
+  kitSaveTimer = setTimeout(()=>{ if(kitDirty) saveKitDoc(true); }, 1500);
+}
+
+function toggleKitCheck(si, ii, val) {
+  const docIdx = activeKitDoc;
+  const tag = document.getElementById('kitClientTag')?.value||'';
+  const key = kitKey(docIdx, tag);
+  if(!S.kitData) S.kitData={};
+  if(!S.kitData[key]) S.kitData[key]={};
+  S.kitData[key]['mtg-'+si+'-'+ii] = val;
+  save();
+  const item = document.getElementById('kci-'+si+'-'+ii);
+  if(item) item.className = 'kit-check-item'+(val?' done':'');
+  kitDirty = false;
+}
+
+function saveKitDoc(silent) {
+  const docIdx = activeKitDoc;
+  const tag = document.getElementById('kitClientTag')?.value||'';
+  const key = kitKey(docIdx, tag);
+  if(!S.kitData) S.kitData={};
+  if(!S.kitData[key]) S.kitData[key]={};
+  const container = document.getElementById('kitDocContainer');
+  if(!container) return;
+  container.querySelectorAll('input:not([type=checkbox]),textarea,select').forEach(el=>{
+    if(el.id) S.kitData[key][el.id] = el.value;
+  });
+  container.querySelectorAll('input[type=checkbox]').forEach(el=>{
+    if(el.id && !el.id.startsWith('kchk-')) S.kitData[key][el.id] = el.checked;
+  });
+  save(); kitDirty=false;
+  if(!silent) toast('Saved · '+KIT_DOCS[docIdx].title);
+}
+
+function exportKitDoc() {
+  saveKitDoc();
+  const docIdx = activeKitDoc;
+  const tag = document.getElementById('kitClientTag')?.value||'';
+  const key = kitKey(docIdx, tag);
+  const data = S.kitData&&S.kitData[key] ? S.kitData[key] : {};
+  const doc = KIT_DOCS[docIdx];
+  const proj = S.projects.find(p=>p.id===tag);
+  let out = 'AZUMI DESIGNS\n'+doc.title.toUpperCase()+'\n';
+  if(proj) out += 'Project: '+proj.name+'\n';
+  out += new Date().toLocaleDateString('en-IN')+'\n';
+  out += '─'.repeat(60)+'\n\n';
+  // simple key-value dump of saved data
+  Object.entries(data).forEach(([k,v])=>{
+    if(typeof v==='boolean') out += (v?'[✓] ':'[ ] ')+k+'\n';
+    else if(v&&v.toString().trim()) out += k+': '+v+'\n';
+  });
+  out += '\n\nazumidesigns.co.in · hello@azumidesigns.co.in';
+  const blob = new Blob([out],{type:'text/plain'});
+  const a = document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='azumi_'+doc.id+'_'+(proj?proj.name.replace(/\s+/g,'_'):'general')+'.txt';
+  a.click(); toast('Exported');
+}
+
+function toggleClause(boxId) {
+  const box = document.getElementById(boxId);
+  if(box) box.classList.toggle('open');
+}
+
+// Kit tab switching
+document.addEventListener('click', e=>{
+  if(e.target.classList.contains('kit-tab')) {
+    clearTimeout(kitSaveTimer);
+    if(kitDirty) saveKitDoc(true);
+    document.querySelectorAll('.kit-tab').forEach(t=>t.classList.remove('active'));
+    e.target.classList.add('active');
+    activeKitDoc = parseInt(e.target.dataset.doc);
+    renderKitDoc();
+  }
+});
+
+// ══════════════════════════════════════════════
+// SURVEY
+// ══════════════════════════════════════════════
+function generateSurveyLink() {
+  const studio = v('sv-studio')||'Azumi Designs';
+  const designer = v('sv-designer')||'Sindhu Kodihal';
+  const email = v('sv-email')||'hello@azumidesigns.co.in';
+  const intro = v('sv-intro');
+
+  const surveyHTML = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><title>${studio} · Client Discovery Form</title><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Mono:wght@400&display=swap" rel="stylesheet"/><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'DM Mono',monospace;background:#f5f0e8;color:#1a1714;padding:2rem}h1{font-family:'Cormorant Garamond',serif;font-size:2.5rem;font-weight:400;color:#a07848;margin-bottom:.3rem}.sub{font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:#7a6f65;margin-bottom:2rem}.intro{font-size:.78rem;line-height:1.9;color:#3d3630;background:#fff;border-left:4px solid #c8a97a;padding:1rem;margin-bottom:2rem}.section-title{font-size:.65rem;letter-spacing:.15em;text-transform:uppercase;color:#a07848;margin-bottom:.5rem;margin-top:1.8rem;padding-bottom:.3rem;border-bottom:1px solid #ede5d4}label{display:block;font-size:.65rem;letter-spacing:.08em;color:#7a6f65;margin-bottom:.3rem;margin-top:.9rem}input,textarea,select{width:100%;background:#fff;border:1px solid #ede5d4;padding:.6rem .8rem;font-family:'DM Mono',monospace;font-size:.75rem;color:#1a1714;outline:none}textarea{min-height:80px;resize:vertical}.submit{margin-top:1.5rem;background:#1a1714;color:#f5f0e8;border:none;padding:.8rem 2rem;font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;cursor:pointer}.submit:hover{background:#a07848}footer{margin-top:3rem;font-size:.62rem;color:#7a6f65;text-align:center;border-top:1px solid #ede5d4;padding-top:1rem}form{max-width:640px}h2{font-family:'Cormorant Garamond',serif;font-size:1.3rem;margin-bottom:.3rem;color:#1a1714}</style></head><body>
+<h1>${studio}</h1><div class="sub">Client Discovery Form · ${designer}</div>
+${intro?`<div class="intro">${intro}</div>`:''}
+<form onsubmit="event.preventDefault();document.getElementById('ty').style.display='block';this.style.display='none'">
+<div class="section-title">About You & Your Project</div>
+<label>Your full name(s)</label><input type="text" required/>
+<label>WhatsApp number</label><input type="tel"/>
+<label>Email address</label><input type="email"/>
+<label>Property address or location</label><input type="text"/>
+<label>Type of property</label><select><option>Goa Villa / Holiday Home</option><option>Pune Apartment</option><option>NRI / Remote Project</option><option>Other</option></select>
+<div class="section-title">Design Direction</div>
+<label>Describe your ideal home in 3 words</label><input type="text" placeholder="e.g. Calm, Layered, Warm"/>
+<label>Spaces you want designed</label><textarea placeholder="e.g. Living room, master bedroom, kitchen, 2 bathrooms..."></textarea>
+<label>References or inspiration (links, Instagram handles, etc.)</label><textarea placeholder="Share any images, links, or accounts you love"></textarea>
+<label>Something you've seen and absolutely do NOT want</label><input type="text"/>
+<div class="section-title">Budget & Timeline</div>
+<label>Approximate interior design budget</label><input type="text" placeholder="₹ — — — —"/>
+<label>Ideal completion or move-in date</label><input type="date"/>
+<label>Is this date fixed or flexible?</label><select><option>Fixed — there's a hard reason</option><option>Flexible — within a few months</option><option>Very flexible</option></select>
+<div class="section-title">Anything Else</div>
+<label>Is there anything else we should know before we begin?</label><textarea placeholder="Constraints, specific requests, dreams for the space..."></textarea>
+<button class="submit" type="submit">Submit →</button>
+</form>
+<div id="ty" style="display:none;padding:2rem;background:#fff;border-left:4px solid #c8a97a;margin-top:2rem;font-size:.8rem;line-height:1.9;color:#3d3630"><strong style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;display:block;margin-bottom:.5rem">Thank you.</strong>We've received your form and will be in touch within 24–48 hours.<br/>${email}</div>
+<footer>${studio} · ${designer} · ${email}</footer>
+</body></html>`;
+
+  const blob = new Blob([surveyHTML],{type:'text/html'});
+  const url = URL.createObjectURL(blob);
+  document.getElementById('surveyLinkOutput').innerHTML = `
+    <div style="padding:.7rem;background:var(--bg3);border:1px solid var(--border2);font-size:.65rem;margin-top:.5rem">
+      <a href="${url}" target="_blank" style="color:var(--clay)">↗ Open Survey Preview</a>
+      <span style="color:var(--ink3);margin:0 .5rem">·</span>
+      <a href="${url}" download="azumi-client-survey.html" style="color:var(--clay2)">↓ Download HTML File</a>
+      <div style="color:var(--ink3);margin-top:.4rem;font-size:.6rem">Download and host on Netlify Drop, or email the HTML file directly to clients.</div>
+    </div>`;
+  toast('Survey generated');
+}
+
+// ══════════════════════════════════════════════
+// EXPORT / IMPORT SYNC
+// ══════════════════════════════════════════════
+function exportData() {
+  const blob = new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'azumi-studio-backup-'+new Date().toISOString().slice(0,10)+'.json';
+  a.click(); toast('Backup exported');
+}
+
+function importData(e) {
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if(confirm('This will replace all current data. Continue?')) {
+        S = data; save();
+        renderDashboard(); toast('Data imported successfully');
+        document.querySelector('[data-page="dashboard"]').click();
+      }
+    } catch(err) { toast('Invalid file'); }
+  };
+  reader.readAsText(file);
+}
+
+// ══════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════
+function v(id){ return document.getElementById(id)?.value||''; }
+
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
+renderDashboard();
+renderClients();
+renderLinks();
+renderMoodboard();
+</script>
+</body>
+</html>

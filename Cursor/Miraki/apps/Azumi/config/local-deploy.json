@@ -1,0 +1,27 @@
+{
+    "server": {
+      "port": 8080,
+      "contextPath": "/azumi",
+      "reloadOnSave": true
+    },
+    "database": {
+      "path": "./data/local-db",
+      "autoMigrate": true
+    },
+    "logging": {
+      "level": "DEBUG",
+      "file": "./logs/local-deploy.log"
+    },
+    "ui": {
+      "theme": "light",
+      "enableDarkModeToggle": true
+    },
+    "email": {
+      "smtpHost": "localhost",
+      "smtpPort": 2525,
+      "testMode": true,
+      "fromAddress": "noreply@azumidesigns.local",
+      "fromName": "AzumiDesigns Test Mail"
+    }
+  }
+  
